@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Collections;
@@ -69,14 +70,13 @@ public class NerdLauncherFragment extends Fragment {
         public ActivityHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
             View view = layoutInflater
-                    .inflate(android.R.layout.simple_list_item_1, parent, false);
+                    .inflate(R.layout.item_launcher, parent, false);
             return new ActivityHolder(view);
         }
 
         @Override
         public void onBindViewHolder(ActivityHolder holder, int position) {
-            ResolveInfo resolveInfo = mActivities.get(position);
-            holder.bindActivity(resolveInfo);
+            holder.bindActivity(mActivities.get(position));
         }
 
         @Override
@@ -85,33 +85,33 @@ public class NerdLauncherFragment extends Fragment {
         }
     }
 
-    private class ActivityHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
+    private class ActivityHolder extends RecyclerView.ViewHolder {
         private ResolveInfo mResolveInfo;
-        private TextView mNameTextView;
+        private TextView mAppName;
+        private ImageView mIcon;
 
         public ActivityHolder(View itemView) {
             super(itemView);
-            mNameTextView = (TextView) itemView;
-            mNameTextView.setOnClickListener(this);
+            mIcon = itemView.findViewById(R.id.app_icon);
+            mAppName = itemView.findViewById(R.id.app_name);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ActivityInfo activityInfo = mResolveInfo.activityInfo;
+                    Intent i = new Intent(Intent.ACTION_MAIN)
+                            .setClassName(activityInfo.applicationInfo.packageName, activityInfo.name)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                }
+            });
         }
 
         public void bindActivity(ResolveInfo resolveInfo) {
             mResolveInfo = resolveInfo;
             PackageManager pm = getActivity().getPackageManager();
-            String appName = mResolveInfo.loadLabel(pm).toString();
-            mNameTextView.setText(appName);
-        }
-
-        @Override
-        public void onClick(View v) {
-            ActivityInfo activityInfo = mResolveInfo.activityInfo;
-
-            Intent i = new Intent(Intent.ACTION_MAIN)
-                    .setClassName(activityInfo.applicationInfo.packageName, activityInfo.name)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            startActivity(i);
+            mIcon.setImageDrawable(mResolveInfo.loadIcon(pm));
+            mAppName.setText(mResolveInfo.loadLabel(pm).toString());
         }
     }
 }
